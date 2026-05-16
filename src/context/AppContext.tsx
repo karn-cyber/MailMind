@@ -24,11 +24,19 @@ type Action =
 const initialState: AppState = {
   apiKey: null,
   prefs: { ...DEFAULT_PREFS },
+  // New v2 state
+  senders: [],
+  sendersLoading: false,
+  currentSender: null,
+  messages: [],
+  messagesLoading: false,
+  // Legacy state (for backward compatibility)
   currentEmail: '',
   emailSummary: [],
   casualReply: '',
   formalReply: '',
   selectedTone: DEFAULT_PREFS.defaultTone,
+  // Shared state
   isLoading: false,
   loadingMessage: '',
   error: null,

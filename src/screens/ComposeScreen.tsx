@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -70,9 +70,9 @@ export function ComposeScreen({ navigation }: Props) {
           ) : (
             <View style={styles.summaryCollapsed}>
               <Text style={styles.summaryCollapsedText} numberOfLines={1}>
-                <MaterialIcons name="star" size={16} color={Colors.ink} />  {state.emailSummary[0] ?? 'Summary'}
+                <Ionicons name="sparkles" size={16} color={Colors.ink} />  {state.emailSummary[0] ?? 'Summary'}
               </Text>
-              <MaterialIcons name="expand-more" size={18} color={Colors.ink} style={styles.summaryExpandIcon} />
+              <Ionicons name="chevron-down" size={18} color={Colors.ink} style={styles.summaryExpandIcon} />
             </View>
           )}
         </TouchableOpacity>
@@ -132,7 +132,7 @@ export function ComposeScreen({ navigation }: Props) {
 
         {/* CTA */}
         <Button
-          label="Formalise Reply →"
+          label="Formalise Reply"
           onPress={handleFormalise}
           disabled={!canFormalise}
           fullWidth

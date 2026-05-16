@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { useApp } from '../context/AppContext';
@@ -64,7 +64,7 @@ export function HomeScreen({ navigation }: Props) {
           style={styles.settingsBtn}
           accessibilityLabel="Open Settings"
         >
-          <MaterialIcons name="settings" size={24} color={Colors.ink} />
+          <Ionicons name="settings-outline" size={24} color={Colors.ink} />
         </TouchableOpacity>
       </View>
 
@@ -84,9 +84,9 @@ export function HomeScreen({ navigation }: Props) {
         {/* Input card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardLabel}><MaterialIcons name="email" size={16} color={Colors.ink} />  Paste Email</Text>
+            <Text style={styles.cardLabel}><Ionicons name="mail-outline" size={16} color={Colors.ink} />  Paste Email</Text>
             <TouchableOpacity onPress={handlePaste} style={styles.pasteChip} accessibilityLabel="Paste from clipboard">
-              <Text style={styles.pasteChipText}><MaterialIcons name="content-paste" size={14} color={Colors.brand} />  Paste</Text>
+              <Text style={styles.pasteChipText}><Ionicons name="clipboard-outline" size={14} color={Colors.brand} />  Paste</Text>
             </TouchableOpacity>
           </View>
 
@@ -123,10 +123,10 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.helpSection}>
             <Text style={styles.helpTitle}>How it works</Text>
             {[
-              { icon: <MaterialIcons key="paste" name="content-paste" size={18} color={Colors.ink} />, text: 'Paste any email you received' },
-              { icon: <MaterialIcons key="star" name="star" size={18} color={Colors.ink} />, text: 'Get a 3-second AI summary' },
-              { icon: <MaterialIcons key="edit" name="edit" size={18} color={Colors.ink} />, text: 'Type your reply in plain words' },
-              { icon: <MaterialIcons key="send" name="send" size={18} color={Colors.ink} />, text: 'Send a polished professional email' },
+              { icon: <Ionicons key="paste" name="clipboard-outline" size={18} color={Colors.ink} />, text: 'Paste any email you received' },
+              { icon: <Ionicons key="star" name="sparkles" size={18} color={Colors.ink} />, text: 'Get a 3-second AI summary' },
+              { icon: <Ionicons key="edit" name="pencil-outline" size={18} color={Colors.ink} />, text: 'Type your reply in plain words' },
+              { icon: <Ionicons key="send" name="arrow-up" size={18} color={Colors.ink} />, text: 'Send a polished professional email' },
             ].map(item => (
               <View key={item.text} style={styles.helpRow}>
                 <View style={styles.helpIcon}>{item.icon}</View>

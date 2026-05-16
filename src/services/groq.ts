@@ -74,6 +74,7 @@ async function callGroq(
             },
           ],
           temperature: 0.7,
+          max_tokens: 600,
         }),
         signal,
       });

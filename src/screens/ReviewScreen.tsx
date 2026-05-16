@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -136,7 +136,7 @@ export function ReviewScreen({ navigation }: Props) {
         {/* Privacy note */}
         <View style={styles.privacyBox}>
           <View style={{ flexDirection: 'row', gap: Spacing['2'] }}>
-            <MaterialIcons name="lock" size={16} color={Colors.ink} />
+            <Ionicons name="lock-closed-outline" size={16} color={Colors.ink} />
             <Text style={styles.privacyText}>
               This reply was generated using your personal API key. It was never stored on any server.
             </Text>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ export function SummaryScreen({ navigation }: Props) {
     <View style={GlobalStyles.screen}>
       <ScreenHeader
         title="Summary"
-        subtitle={`${wordCount} words → ${state.emailSummary.length} key points`}
+        subtitle={`${wordCount} words to ${state.emailSummary.length} key points`}
         onBack={() => navigation.goBack()}
         rightAction={{ label: 'Start over', onPress: () => { reset(); navigation.navigate('Home'); } }}
       />
@@ -51,7 +51,7 @@ export function SummaryScreen({ navigation }: Props) {
         {/* Actions */}
         <View style={styles.actions}>
           <Button
-            label="✎  Write My Reply"
+            label="Write My Reply"
             onPress={() => navigation.navigate('Compose')}
             fullWidth
             size="lg"
@@ -68,7 +68,7 @@ export function SummaryScreen({ navigation }: Props) {
         {/* Info callout */}
         <View style={styles.infoBox}>
           <View style={{ flexDirection: 'row', gap: Spacing['2'] }}>
-            <MaterialIcons name="info" size={16} color={Colors.ink} />
+            <Ionicons name="information-circle-outline" size={16} color={Colors.ink} />
             <Text style={styles.infoText}>
               Your email was summarised using <Text style={styles.infoBold}>Claude AI</Text> with your API key. Nothing was stored on any server.
             </Text>

@@ -1,46 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Linking,
-  Switch,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
+  Alert, Linking, Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, UserPrefs } from '../types';
-import { useApp } from '../context/AppContext';
-import { Button } from '../components/Button';
-import { ScreenHeader } from '../components/ScreenHeader';
-import { Colors, Spacing, Typography, Radii, Shadows, GlobalStyles } from '../constants/theme';
-import { TONES } from '../constants/config';
-import { setApiKey as persistKey, deleteApiKey } from '../services/storage';
-import { savePrefs } from '../services/prefs';
+import { getApiKey, setApiKey, deleteApiKey } from '../services/storage';
+import { getPrefs, savePrefs } from '../services/prefs';
 import { isValidKeyFormat, maskApiKey } from '../utils/emailParser';
+import { Button } from '../components/Button';
+import { TONES, DEFAULT_PREFS } from '../constants/config';
+import { Colors, Radii, Spacing, Typography, Shadows } from '../constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-export function SettingsScreen({ navigation, route }: Props) {
-  const { state, setApiKey, clearApiKey, setPrefs } = useApp();
-  const fromOnboarding = route.params?.fromOnboarding;
+export function SettingsScreen({ route, navigation }: Props) {
+  const fromOnboarding = route.params?.fromOnboarding ?? false;
 
+  const [hasKey, setHasKey] = useState(false);
+  const [maskedKey, setMaskedKey] = useState('');
   const [keyInput, setKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [isEditingKey, setIsEditingKey] = useState(!state.apiKey);
   const [keyError, setKeyError] = useState('');
-  const [savedIndicator, setSavedIndicator] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const [localPrefs, setLocalPrefs] = useState<UserPrefs>(DEFAULT_PREFS);
 
-  const [localPrefs, setLocalPrefs] = useState<UserPrefs>({ ...state.prefs });
-
-  // Sync local prefs from context whenever context changes
   useEffect(() => {
-    setLocalPrefs({ ...state.prefs });
-  }, [state.prefs]);
+    (async () => {
+      const key = await getApiKey();
+      if (key) {
+        setHasKey(true);
+        setMaskedKey(maskApiKey(key));
+      }
+      const prefs = await getPrefs();
+      setLocalPrefs(prefs);
+    })();
+  }, []);
 
   // ── API Key ───────────────────────────────────────────────────────────────
   async function handleSaveKey() {
@@ -50,15 +47,15 @@ export function SettingsScreen({ navigation, route }: Props) {
       return;
     }
     setKeyError('');
-    await persistKey(trimmed);
-    setApiKey(trimmed);
-    setIsEditingKey(false);
+    await setApiKey(trimmed);
+    setHasKey(true);
+    setMaskedKey(maskApiKey(trimmed));
     setKeyInput('');
-    setSavedIndicator(true);
-    setTimeout(() => setSavedIndicator(false), 2000);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
   }
 
-  async function handleDeleteKey() {
+  function handleRemoveKey() {
     Alert.alert(
       'Remove API Key',
       'Are you sure? You will need to re-enter your key to use MailMind.',
@@ -69,84 +66,72 @@ export function SettingsScreen({ navigation, route }: Props) {
           style: 'destructive',
           onPress: async () => {
             await deleteApiKey();
-            clearApiKey();
-            setIsEditingKey(true);
+            setHasKey(false);
+            setMaskedKey('');
           },
         },
-      ],
+      ]
     );
   }
 
-  // ── Prefs ─────────────────────────────────────────────────────────────────
+  // ── Save Preferences ──────────────────────────────────────────────────────
   async function handleSavePrefs() {
     await savePrefs(localPrefs);
-    setPrefs(localPrefs);
-    setSavedIndicator(true);
-    setTimeout(() => setSavedIndicator(false), 2000);
-  }
-
-  async function handleDone() {
-    await handleSavePrefs();
-    // If coming from onboarding or has back, go back; otherwise navigate to Home
-    if (fromOnboarding) {
-      // Reset to Home when exiting onboarding
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
-    } else if (navigation.canGoBack()) {
+    if (fromOnboarding && hasKey) {
       navigation.goBack();
     } else {
-      navigation.navigate('Home');
+      Alert.alert('Saved', 'Your settings have been saved.');
     }
   }
 
   return (
-    <View style={GlobalStyles.screen}>
-      <ScreenHeader
-        title="Settings"
-        onBack={!fromOnboarding ? () => navigation.goBack() : undefined}
-        rightAction={{ label: savedIndicator ? 'Saved' : 'Done', onPress: handleDone }}
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Header */}
+        <View style={styles.headerRow}>
+          {!fromOnboarding && (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={18} color={Colors.brand} />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.pageTitle}>Settings</Text>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {fromOnboarding && (
+        {fromOnboarding && !hasKey && (
           <View style={styles.onboardingBanner}>
             <Text style={styles.onboardingTitle}>Welcome to MailMind</Text>
             <Text style={styles.onboardingText}>
-              Add your API key to get started. Your key is stored securely on your device only.
+              To get started, add your free Groq API key below. Your key stays on this device only.
             </Text>
           </View>
         )}
 
-        {/* ── API Key Section ──────────────────────────────────────── */}
+        {/* ── API Key Section ─────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>API Key</Text>
-          <Text style={styles.sectionSubtitle}>
-            Used for all AI features. Never leaves your device.
-          </Text>
+          <Text style={styles.sectionSubtitle}>Your key is stored securely on this device.</Text>
 
-          {!isEditingKey && state.apiKey ? (
+          {hasKey ? (
             <View style={styles.card}>
               <View style={styles.keyDisplay}>
-                <Text style={styles.keyMasked}>{maskApiKey(state.apiKey)}</Text>
+                <Text style={styles.keyMasked}>{maskedKey}</Text>
                 <View style={styles.keyBadge}>
-                  <Text style={styles.keyBadgeText}>Active</Text>
+                  <Text style={styles.keyBadgeText}>{justSaved ? 'Saved' : 'Active'}</Text>
                 </View>
               </View>
               <View style={styles.keyActions}>
                 <Button
                   label="Change Key"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  onPress={() => setIsEditingKey(true)}
+                  onPress={() => { setHasKey(false); setKeyInput(''); }}
                   style={{ flex: 1 }}
                 />
                 <Button
                   label="Remove"
                   variant="danger"
                   size="sm"
-                  onPress={handleDeleteKey}
+                  onPress={handleRemoveKey}
                   style={{ flex: 1 }}
                 />
               </View>
@@ -170,7 +155,7 @@ export function SettingsScreen({ navigation, route }: Props) {
                   style={styles.eyeBtn}
                   accessibilityLabel={showKey ? 'Hide key' : 'Show key'}
                 >
-                  <Text style={styles.eyeIcon}>{showKey ? '🙈' : '👁️'}</Text>
+                  <Ionicons name={showKey ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.brand} />
                 </TouchableOpacity>
               </View>
               {keyError ? <Text style={styles.keyError}>{keyError}</Text> : null}
@@ -186,7 +171,10 @@ export function SettingsScreen({ navigation, route }: Props) {
                 style={styles.getKeyLink}
                 accessibilityLabel="Get your free Groq API key"
               >
-                <Text style={styles.getKeyText}>→ Get your free Groq API key from console.groq.com</Text>
+                <View style={styles.getKeyRow}>
+                  <Ionicons name="open-outline" size={16} color={Colors.brand} />
+                  <Text style={styles.getKeyText}>Get your free Groq API key from console.groq.com</Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -212,9 +200,12 @@ export function SettingsScreen({ navigation, route }: Props) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={styles.optionHeader}>
-                      <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
-                        {tone.label}
-                      </Text>
+                      <Ionicons
+                        name={tone.key === 'formal' ? 'business-outline' : tone.key === 'friendly' ? 'happy-outline' : 'briefcase-outline'}
+                        size={18}
+                        color={selected ? Colors.brand : Colors.muted}
+                      />
+                      <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>{tone.label}</Text>
                     </View>
                     <Text style={styles.optionDesc}>{tone.description}</Text>
                   </View>
@@ -224,7 +215,7 @@ export function SettingsScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        {/* ── Signature ────────────────────────────────────────────── */}
+        {/* ── Signature Section ────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Email Signature</Text>
           <Text style={styles.sectionSubtitle}>Optional. Appended to every reply.</Text>
@@ -232,7 +223,7 @@ export function SettingsScreen({ navigation, route }: Props) {
             <TextInput
               style={styles.signatureInput}
               value={localPrefs.signature}
-              onChangeText={v => setLocalPrefs(p => ({ ...p, signature: v }))}
+              onChangeText={s => setLocalPrefs(p => ({ ...p, signature: s }))}
               placeholder={'e.g.\nBest regards,\nJohn Smith\njohn@company.com'}
               placeholderTextColor={Colors.subtle}
               multiline
@@ -243,12 +234,10 @@ export function SettingsScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <Button label="Save Settings" onPress={handleDone} fullWidth size="lg" />
-
-        {/* Version */}
-        <Text style={styles.version}>MailMind v1.0  ·  BYOK  ·  No backend</Text>
+        <Button label="Save Settings" onPress={handleSavePrefs} fullWidth size="lg" />
+        <Text style={styles.version}>MailMind v2.0  ·  Groq  ·  MongoDB</Text>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -258,12 +247,24 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing['12'],
     gap: Spacing['5'],
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+  },
+  backBtn: { padding: Spacing['2'] },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: Colors.ink,
+    letterSpacing: -0.5,
+  },
   onboardingBanner: {
-    backgroundColor: Colors.brandLight,
+    backgroundColor: 'rgba(99,102,241,0.08)',
     borderRadius: Radii.lg,
     padding: Spacing['4'],
     borderWidth: 1,
-    borderColor: Colors.brandBorder,
+    borderColor: 'rgba(99,102,241,0.2)',
   },
   onboardingTitle: {
     fontSize: Typography.lg,
@@ -292,7 +293,6 @@ const styles = StyleSheet.create({
     padding: Spacing['4'],
     ...Shadows.sm,
   },
-  // Key display
   keyDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -301,18 +301,25 @@ const styles = StyleSheet.create({
   },
   keyMasked: {
     fontSize: Typography.base,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     color: Colors.body,
     letterSpacing: 1,
   },
   keyBadge: {
-    backgroundColor: Colors.greenLight,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
     borderRadius: Radii.full,
     paddingHorizontal: Spacing['3'],
     paddingVertical: 2,
   },
-  keyBadgeText: { fontSize: Typography.xs, fontWeight: '700', color: Colors.green },
-  keyActions: { flexDirection: 'row', gap: Spacing['3'] },
+  keyBadgeText: {
+    fontSize: Typography.xs,
+    fontWeight: '700',
+    color: '#10b981',
+  },
+  keyActions: {
+    flexDirection: 'row',
+    gap: Spacing['3'],
+  },
   keyInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,23 +333,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.base,
     color: Colors.body,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   eyeBtn: { padding: Spacing['2'] },
-  eyeIcon: { fontSize: Typography.md },
   keyError: {
     fontSize: Typography.xs,
     color: Colors.red,
     marginTop: Spacing['2'],
   },
-  getKeyLink: { marginTop: Spacing['3'], alignItems: 'center' },
+  getKeyLink: {
+    marginTop: Spacing['3'],
+    alignItems: 'center',
+  },
+  getKeyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   getKeyText: {
     fontSize: Typography.xs,
     color: Colors.brand,
     textDecorationLine: 'underline',
     fontWeight: '500',
   },
-  // Options
   optionRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -351,8 +364,13 @@ const styles = StyleSheet.create({
     borderRadius: Radii.md,
     paddingHorizontal: Spacing['2'],
   },
-  optionRowBorder: { borderTopWidth: 1, borderTopColor: Colors.rule },
-  optionRowSelected: { backgroundColor: Colors.brandLight },
+  optionRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.rule,
+  },
+  optionRowSelected: {
+    backgroundColor: 'rgba(99,102,241,0.06)',
+  },
   radioOuter: {
     width: 20,
     height: 20,
@@ -369,20 +387,23 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: Colors.brand,
   },
-  optionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing['2'], marginBottom: 2 },
-  optionEmoji: { fontSize: Typography.base },
-  optionLabel: { fontSize: Typography.base, fontWeight: '600', color: Colors.body },
-  optionLabelSelected: { color: Colors.brand },
-  optionDesc: { fontSize: Typography.sm, color: Colors.muted, lineHeight: Typography.sm * 1.5 },
-  badge: {
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: Radii.full,
-    paddingHorizontal: Spacing['2'],
-    paddingVertical: 2,
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2'],
+    marginBottom: 2,
   },
-  badgeSelected: { backgroundColor: Colors.brand },
-  badgeText: { fontSize: Typography.xs, color: Colors.muted, fontWeight: '600' },
-  badgeTextSelected: { color: Colors.white },
+  optionLabel: {
+    fontSize: Typography.base,
+    fontWeight: '600',
+    color: Colors.body,
+  },
+  optionLabelSelected: { color: Colors.brand },
+  optionDesc: {
+    fontSize: Typography.sm,
+    color: Colors.muted,
+    lineHeight: Typography.sm * 1.5,
+  },
   signatureInput: {
     minHeight: 80,
     fontSize: Typography.sm,

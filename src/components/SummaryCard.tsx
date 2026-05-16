@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radii, Spacing, Typography, Shadows } from '../constants/theme';
 
 interface Props {
@@ -14,7 +14,7 @@ export function SummaryCard({ bullets, compact = false }: Props) {
   return (
     <View style={[styles.card, compact && styles.compact]}>
       <View style={styles.header}>
-        <MaterialIcons name="star" size={18} color={Colors.ink} style={styles.headerIcon} />
+        <Ionicons name="sparkles" size={12} color={Colors.brand} style={styles.headerIcon} />
         <Text style={styles.headerLabel}>Summary</Text>
       </View>
       {bullets.map((b, i) => (
@@ -34,6 +34,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.brandBorder,
     padding: Spacing['4'],
+    width: '100%',
+    overflow: 'hidden',
     ...Shadows.sm,
   },
   compact: {
@@ -46,8 +48,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['3'],
   },
   headerIcon: {
-    fontSize: Typography.sm,
-    color: Colors.brand,
+    marginTop: 1,
   },
   headerLabel: {
     fontSize: Typography.sm,

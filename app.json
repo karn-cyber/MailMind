@@ -37,8 +37,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "3aa861d4-83a9-43ce-9e3a-3ffbbd24a467"
       }
-    }
+    },
+    "owner": "neelanshukarn"
   }
 }

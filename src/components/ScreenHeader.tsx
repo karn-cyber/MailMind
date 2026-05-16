@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '../constants/theme';
 
 interface Props {
@@ -10,8 +12,10 @@ interface Props {
 }
 
 export function ScreenHeader({ title, subtitle, onBack, rightAction }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.row}>
         {onBack ? (
           <TouchableOpacity
@@ -20,7 +24,7 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction }: Props) {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <Text style={styles.backIcon}>←</Text>
+            <Ionicons name="chevron-back" size={24} color={Colors.brand} />
           </TouchableOpacity>
         ) : (
           <View style={styles.backPlaceholder} />
@@ -53,7 +57,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.rule,
-    paddingTop: Platform.OS === 'android' ? Spacing['4'] : 0,
   },
   row: {
     flexDirection: 'row',
@@ -63,17 +66,12 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backIcon: {
-    fontSize: Typography.xl,
-    color: Colors.brand,
-    fontWeight: '300',
-  },
-  backPlaceholder: { width: 40 },
+  backPlaceholder: { width: 44 },
   titleGroup: { flex: 1, alignItems: 'center' },
   title: {
     fontSize: Typography.md,

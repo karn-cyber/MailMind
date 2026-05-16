@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ToneType } from '../types';
 import { TONES } from '../constants/config';
 import { Colors, Radii, Spacing, Typography } from '../constants/theme';
@@ -25,7 +26,7 @@ export function ToneChips({ selected, onChange }: Props) {
               accessibilityState={{ selected: active }}
               style={[styles.chip, active && styles.chipActive]}
             >
-              <Text style={styles.emoji}>{tone.emoji}</Text>
+              <Ionicons name={tone.key === 'formal' ? 'business-outline' : tone.key === 'friendly' ? 'happy-outline' : 'briefcase-outline'} size={16} color={active ? Colors.brand : Colors.muted} />
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
                 {tone.label}
               </Text>
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing['1'],
+    minHeight: 44,
     paddingVertical: Spacing['2'],
     paddingHorizontal: Spacing['3'],
     borderRadius: Radii.full,
@@ -65,7 +67,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.brand,
     backgroundColor: Colors.brandLight,
   },
-  emoji: { fontSize: Typography.sm },
   chipText: {
     fontSize: Typography.sm,
     fontWeight: '600',

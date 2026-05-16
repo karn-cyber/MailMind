@@ -8,32 +8,52 @@ export interface ToneOption {
   emoji: string;
 }
 
-// ─── App State ───────────────────────────────────────────────────────────────
-export type AppScreen =
-  | 'INIT'
-  | 'NO_KEY'
-  | 'IDLE'
-  | 'SUMMARISING'
-  | 'SUMMARISED'
-  | 'COMPOSING'
-  | 'FORMALISING'
-  | 'REVIEW'
-  | 'REGENERATING'
-  | 'ERROR';
+// ─── Database Models ─────────────────────────────────────────────────────────
+export interface Sender {
+  _id: string;
+  name: string;
+  email: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  createdAt: string;
+}
 
+export type MessageType = 'email_in' | 'reply_out';
+
+export interface Message {
+  _id: string;
+  senderId: string;
+  type: MessageType;
+  content: string;        // raw email text (email_in) or formal reply (reply_out)
+  summary: string[];      // bullet points (email_in only)
+  casualDraft: string;    // user's casual text (reply_out only)
+  tone: string;           // tone used for formalisation (reply_out only)
+  createdAt: string;
+}
+
+// ─── User Preferences ───────────────────────────────────────────────────────
 export interface UserPrefs {
   defaultTone: ToneType;
   signature: string;
 }
 
+// ─── App State ───────────────────────────────────────────────────────────────
 export interface AppState {
   apiKey: string | null;
   prefs: UserPrefs;
-  currentEmail: string;
-  emailSummary: string[];
-  casualReply: string;
-  formalReply: string;
-  selectedTone: ToneType;
+  // New: Inbox & Chat state
+  senders: Sender[];
+  sendersLoading: boolean;
+  currentSender: Sender | null;
+  messages: Message[];
+  messagesLoading: boolean;
+  // Legacy: Kept for backward compatibility with Groq/Settings
+  currentEmail?: string;
+  emailSummary?: string[];
+  casualReply?: string;
+  formalReply?: string;
+  selectedTone?: ToneType;
+  // Shared: AI flow & errors
   isLoading: boolean;
   loadingMessage: string;
   error: AppError | null;
@@ -59,9 +79,8 @@ export interface AppError {
 
 // ─── Navigation ──────────────────────────────────────────────────────────────
 export type RootStackParamList = {
-  Home: undefined;
-  Summary: undefined;
-  Compose: undefined;
-  Review: undefined;
+  Inbox: undefined;
+  Chat: { senderId: string; senderName: string; senderEmail: string };
+  NewEmail: { senderId?: string; senderName?: string; senderEmail?: string };
   Settings: { fromOnboarding?: boolean };
 };
